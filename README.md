@@ -6,7 +6,7 @@
 - **Web App**: PHP 8.2 Apache
 - **Database**: MySQL 8.0 & phpMyAdmin
 - **Reverse Proxy**: Nginx (Hỗ trợ HTTPS SSL tự ký & Security Headers)
-- **Monitoring**: Prometheus + Grafana (Commit 2)
+- **Monitoring**: Prometheus + Grafana (Commit 2 - Hoàn thành)
 - **Logging**: Loki + Promtail (Commit 3)
 
 ## Hướng dẫn cài đặt & khởi chạy
