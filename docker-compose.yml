@@ -6,30 +6,30 @@ services:
     container_name: portfolio_web
     restart: unless-stopped
     volumes:
-      - ./web:/var/www/html
+      - ./web:/var/www/html:ro
     environment:
-      - MYSQL_USER=portfolio_user
-      - MYSQL_PASSWORD=UserSecretPass123!
-      - MYSQL_DATABASE=portfolio_db
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
     command: >
       bash -c "docker-php-ext-install mysqli && apache2-foreground"
     networks:
-      - app_network
-      - db_network
+      - frontend_net
+      - backend_net
 
   db:
     image: mysql:8.0
     container_name: portfolio_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: RootSuperSecurePass2026!
-      MYSQL_DATABASE: portfolio_db
-      MYSQL_USER: portfolio_user
-      MYSQL_PASSWORD: UserSecretPass123!
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
     networks:
-      - db_network
+      - backend_net
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -38,11 +38,11 @@ services:
     environment:
       PMA_HOST: db
       PMA_USER: root
-      PMA_PASSWORD: RootSuperSecurePass2026!
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       PMA_ABSOLUTE_URI: https://192.168.232.128/pma/
     networks:
-      - app_network
-      - db_network
+      - frontend_net
+      - backend_net
 
   nginx:
     image: nginx:alpine
@@ -58,18 +58,18 @@ services:
       - web
       - phpmyadmin
     networks:
-      - app_network
+      - frontend_net
 
   prometheus:
     image: prom/prometheus:latest
     container_name: portfolio_prometheus
     restart: unless-stopped
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
     networks:
-      - app_network
+      - monitor_net
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -78,7 +78,7 @@ services:
     ports:
       - "9100:9100"
     networks:
-      - app_network
+      - monitor_net
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
@@ -93,7 +93,30 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - app_network
+      - monitor_net
+
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: portfolio_loki
+    user: "0:0"
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+    networks:
+      - monitor_net
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: portfolio_promtail
+    restart: unless-stopped
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitor_net
 
   grafana:
     image: grafana/grafana:latest
@@ -104,12 +127,14 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
-      - app_network
+      - monitor_net
 
 networks:
-  app_network:
+  frontend_net:
     driver: bridge
-  db_network:
+  backend_net:
+    driver: bridge
+  monitor_net:
     driver: bridge
 
 volumes:

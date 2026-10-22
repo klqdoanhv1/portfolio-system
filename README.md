@@ -7,7 +7,8 @@
 - **Database**: MySQL 8.0 & phpMyAdmin
 - **Reverse Proxy**: Nginx (Hỗ trợ HTTPS SSL tự ký & Security Headers)
 - **Monitoring**: Prometheus + Grafana (Commit 2 - Hoàn thành)
-- **Logging**: Loki + Promtail (Commit 3)
+- **Logging**: Loki + Promtail + LogQL (Commit 3 - Hoàn thành)
+- **Hardening**: Network Isolation, Environment Variables, Least Privilege
 
 ## Hướng dẫn cài đặt & khởi chạy
 ```bash
